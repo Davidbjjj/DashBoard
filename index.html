@@ -94,76 +94,110 @@
           <option value="">Todos</option>
         </select>
       </div>
+      <div class="col-md-3">
+        <label for="filterRegulamentacao" class="form-label">Responsável pela Regulamentação:</label>
+        <select id="filterRegulamentacao" class="form-select" onchange="updateChart()">
+          <option value="">Todos</option>
+          <option value="1">Federal</option>
+          <option value="2">Estadual</option>
+          <option value="3">Municipal</option>
+          <option value="4">Estadual e Municipal</option>
+          <option value="5">Federal e Estadual</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="filterDependencia" class="form-label">Dependência Administrativa:</label>
+        <select id="filterDependencia" class="form-select" onchange="updateChart()">
+          <option value="">Todos</option>
+          <option value="1">Federal</option>
+          <option value="2">Estadual</option>
+          <option value="3">Municipal</option>
+          <option value="4">Privada</option>
+        </select>
+      </div>
     </div>
   </div>
-
   <canvas id="myChart" width="400" height="400"></canvas>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/parse/2.18.0/parse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@0.7.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script>
-    // Configuração do Parse
-    Parse.initialize(
-      'cb1cixfb0XLZ8EnoMuI3SN6Pl1aMhZtUqJQ71A8d', // Application ID
-      'S90kbXG5ewSljML3FQth67ryG3xOHv9ZsGWfbS2Y'  // JavaScript key
-    );
-    Parse.serverURL = 'https://parseapi.back4app.com';
+    // Configuração
+ 
+Parse.initialize(
+'e5UX3sOvZfOY3qwvIdw0b7v18JdUn9ihz34chyhF', // Application ID
+'rSRY7ybwkJThcFwIQirObv3v83Bfa40LWPyaZQNf' // JavaScript key
+);
+Parse.serverURL = 'https://parseapi.back4app.com';
 
-    let myChart;
+let myChart;
 
-    const columnMapping = {
-      "TP_SITUACAO_FUNCIONAMENTO": {
-        "1": "Em Atividade",
-        "2": "Paralisada",
-        "3": "Extinta (ano do Censo)",
-        "4": "Extinta em Anos Anteriores"
-      },
-      "TP_LOCALIZACAO": {
-        "1": "Urbana",
-        "2": "Rural"
-      },
-      "TP_OCUPACAO_PREDIO_ESCOLAR": {
-        "1": "Próprio",
-        "2": "Alugado",
-        "3": "Cedido"
-      }
-    };
+const columnMapping = {
+  "TP_SITUACAO_FUNCIONAMENTO": {
+    "1": "Em Atividade",
+    "2": "Paralisada",
+    "3": "Extinta (ano do Censo)",
+    "4": "Extinta em Anos Anteriores"
+  },
+  "TP_LOCALIZACAO": {
+    "1": "Urbana",
+    "2": "Rural"
+  },
+  "TP_OCUPACAO_PREDIO_ESCOLAR": {
+    "1": "Próprio",
+    "2": "Alugado",
+    "3": "Cedido"
+  },
+  "TP_DEPENDENCIA":{
+    "1": " Federal",
+    "2": "Estadual",
+    "3": "Municipal",
+    "4": "Privada",
+  },
+  "TP_RESPONSAVEL_REGULAMENTACAO":{
+    "1" : "Federal",
+    "2" :"Estadual",
+    "3" :"Municipal",
+    "4" :"Estadual e Municipal",
+    "5" : "Federal e Estadual"
+  }
+};
 
-    async function fetchTopMunicipiosByEstado(estado) {
-      const topMunicipiosPorEstado = {
-        "AC": ["Rio Branco", "Cruzeiro do Sul", "Sena Madureira", "Feijó", "Tarauacá"],
-        "AL": ["Maceió", "Arapiraca", "Rio Largo", "Palmeira dos Índios", "São Miguel dos Campos"],
-        "AP": ["Macapá", "Santana", "Laranjal do Jari", "Oiapoque", "Mazagão"],
-        "AM": ["Manaus", "Parintins", "Itacoatiara", "Manacapuru", "Coari"],
-        "BA": ["Salvador", "Feira de Santana", "Vitória da Conquista", "Camaçari", "Itabuna"],
-        "CE": ["Fortaleza", "Caucaia", "Juazeiro do Norte", "Maracanaú", "Sobral"],
-        "DF": ["Brasília"],
-        "ES": ["Vitória", "Vila Velha", "Serra", "Cariacica", "Cachoeiro de Itapemirim"],
-        "GO": ["Goiânia", "Aparecida de Goiânia", "Anápolis", "Rio Verde", "Luziânia"],
-        "MA": ["São Luís", "Imperatriz", "São José de Ribamar", "Timon", "Caxias"],
-        "MT": ["Cuiabá", "Várzea Grande", "Rondonópolis", "Sinop", "Tangará da Serra"],
-        "MS": ["Campo Grande", "Dourados", "Três Lagoas", "Corumbá", "Ponta Porã"],
-        "MG": ["Belo Horizonte", "Uberlândia", "Contagem", "Juiz de Fora", "Betim"],
-        "PA": ["Belém", "Ananindeua", "Santarém", "Marabá", "Parauapebas"],
-        "PB": ["João Pessoa", "Campina Grande", "Santa Rita", "Patos", "Bayeux"],
-        "PR": ["Curitiba", "Londrina", "Maringá", "Ponta Grossa", "Cascavel"],
-        "PE": ["Recife", "Jaboatão dos Guararapes", "Olinda", "Caruaru", "Petrolina"],
-        "PI": ["Teresina", "Parnaíba", "Picos", "Campo Maior", "Floriano"],
-        "RJ": ["Rio de Janeiro", "São Gonçalo", "Duque de Caxias", "Nova Iguaçu", "Niterói"],
-        "RN": ["Natal", "Mossoró", "Parnamirim", "São Gonçalo do Amarante", "Macaíba"],
-        "RS": ["Porto Alegre", "Caxias do Sul", "Pelotas", "Canoas", "Santa Maria"],
-        "RO": ["Porto Velho", "Ji-Paraná", "Ariquemes", "Vilhena", "Cacoal"],
-        "RR": ["Boa Vista", "Rorainópolis", "Caracaraí", "Pacaraima", "Alto Alegre"],
-        "SC": ["Florianópolis", "Joinville", "Blumenau", "São José", "Criciúma"],
-        "SP": ["São Paulo", "Guarulhos", "Campinas", "São Bernardo do Campo", "Santo André"],
-        "SE": ["Aracaju", "Nossa Senhora do Socorro", "Lagarto", "Itabaiana", "São Cristóvão"],
-        "TO": ["Palmas", "Araguaína", "Gurupi", "Porto Nacional", "Paraíso do Tocantins"]
-      };
-      return topMunicipiosPorEstado[estado] || [];
-    }
+async function fetchTopMunicipiosByEstado(estado) {
+  const topMunicipiosPorEstado = {
+    "AC": ["Rio Branco", "Cruzeiro do Sul", "Sena Madureira", "Feijó", "Tarauacá"],
+    "AL": ["Maceió", "Arapiraca", "Rio Largo", "Palmeira dos Índios", "São Miguel dos Campos"],
+    "AP": ["Macapá", "Santana", "Laranjal do Jari", "Oiapoque", "Mazagão"],
+    "AM": ["Manaus", "Parintins", "Itacoatiara", "Manacapuru", "Coari"],
+    "BA": ["Salvador", "Feira de Santana", "Vitória da Conquista", "Camaçari", "Itabuna"],
+    "CE": ["Fortaleza", "Caucaia", "Juazeiro do Norte", "Maracanaú", "Sobral"],
+    "DF": ["Brasília"],
+    "ES": ["Vitória", "Vila Velha", "Serra", "Cariacica", "Cachoeiro de Itapemirim"],
+    "GO": ["Goiânia", "Aparecida de Goiânia", "Anápolis", "Rio Verde", "Luziânia"],
+    "MA": ["São Luís", "Imperatriz", "São José de Ribamar", "Timon", "Caxias"],
+    "MT": ["Cuiabá", "Várzea Grande", "Rondonópolis", "Sinop", "Tangará da Serra"],
+    "MS": ["Campo Grande", "Dourados", "Três Lagoas", "Corumbá", "Ponta Porã"],
+    "MG": ["Belo Horizonte", "Uberlândia", "Contagem", "Juiz de Fora", "Betim"],
+    "PA": ["Belém", "Ananindeua", "Santarém", "Marabá", "Parauapebas"],
+    "PB": ["João Pessoa", "Campina Grande", "Santa Rita", "Patos", "Bayeux"],
+    "PR": ["Curitiba", "Londrina", "Maringá", "Ponta Grossa", "Cascavel"],
+    "PE": ["Recife", "Jaboatão dos Guararapes", "Olinda", "Caruaru", "Petrolina"],
+    "PI": ["Teresina", "Parnaíba", "Picos", "Campo Maior", "Floriano"],
+    "RJ": ["Rio de Janeiro", "São Gonçalo", "Duque de Caxias", "Nova Iguaçu", "Niterói"],
+    "RN": ["Natal", "Mossoró", "Parnamirim", "São Gonçalo do Amarante", "Macaíba"],
+    "RS": ["Porto Alegre", "Caxias do Sul", "Pelotas", "Canoas", "Santa Maria"],
+    "RO": ["Porto Velho", "Ji-Paraná", "Ariquemes", "Vilhena", "Cacoal"],
+    "RR": ["Boa Vista", "Rorainópolis", "Caracaraí", "Pacaraima", "Alto Alegre"],
+    "SC": ["Florianópolis", "Joinville", "Blumenau", "São José", "Criciúma"],
+    "SP": ["São Paulo", "Guarulhos", "Campinas", "São Bernardo do Campo", "Santo André"],
+    "SE": ["Aracaju", "Nossa Senhora do Socorro", "Lagarto", "Itabaiana", "São Cristóvão"],
+    "TO": ["Palmas", "Araguaína", "Gurupi", "Porto Nacional", "Paraíso do Tocantins"]
+  };
+  return topMunicipiosPorEstado[estado] || [];
+}
 
-    async function updateMunicipiosSelect() {
+async function updateMunicipiosSelect() {
       const uf = document.getElementById('filterUF').value;
       const municipioSelect = document.getElementById('filterMunicipio');
 
@@ -182,7 +216,7 @@
       }
     }
 
-    async function fetchData(column) {
+async function fetchData(column) {
   const Dashboard = Parse.Object.extend('Dashboard');
   const query = new Parse.Query(Dashboard);
 
@@ -192,7 +226,17 @@
   const ocupacao = document.getElementById('filterOcupacao').value;
   const uf = document.getElementById('filterUF').value;
   const municipio = document.getElementById('filterMunicipio').value;
+  const dependencia = document.getElementById('filterDependencia').value;
+  const regulamentacao = document.getElementById('filterRegulamentacao').value;
 
+  if (dependencia) {
+    query.equalTo("TP_DEPENDENCIA", dependencia);
+  }
+  if (regulamentacao) {
+    query.equalTo("TP_RESPONSAVEL_REGULAMENTACAO", regulamentacao);
+  }
+
+  // Removendo os filtros vazios para não limitar a consulta
   if (situacao) {
     query.equalTo("TP_SITUACAO_FUNCIONAMENTO", situacao);
   }
@@ -222,6 +266,7 @@
 
   return dataCount;
 }
+
 async function updateChart() {
   const column = document.getElementById('columnSelect').value;
   const data = await fetchData(column);
